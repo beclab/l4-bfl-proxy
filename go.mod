@@ -1,4 +1,4 @@
-module github.com/Above-Os/l4-bfl-proxy
+module github.com/beclab/l4-bfl-proxy
 
 go 1.18
 
