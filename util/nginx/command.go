@@ -81,9 +81,11 @@ func (n *Command) VersionAndOption() ([]byte, error) {
 }
 
 func IsRunning() bool {
-	out, err := exec.Command("/usr/bin/pgrep", "/sbin/nginx -c /etc/nginx/nginx.conf").Output()
+
+	// out, err := exec.Command("/usr/bin/pgrep", "/sbin/nginx -c /etc/nginx/nginx.conf").Output()
+	out, err := os.ReadFile("/var/run/nginx.pid")
 	if err != nil {
-		klog.V(2).ErrorS(err, "pgrep nginx process")
+		klog.V(2).ErrorS(err, "read /var/run/nginx.pid")
 		return false
 	}
 
