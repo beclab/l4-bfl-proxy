@@ -5,6 +5,7 @@ ENV LANG en_US.UTF-8
 ENV NGINX_VERSION 1.24.0
 ENV NGX_DEVEL_KIT_VERSION 0.3.2
 ENV LUA_NGINX_MODULE_VERSION 0.10.24
+ENV STREAM_LUA_NGINX_MODULE_VERSION 0.0.14
 
 # Install LUAJIT and LUARestyCore
 RUN apk update && apk add --no-cache luajit lua-resty-core
@@ -55,6 +56,7 @@ RUN GPG_KEYS=13C82A63B603576156E30A4EA0EA981B66B0D967 \
 		--with-ld-opt="-Wl,-rpath,/usr/lib" \
 	  --add-module=/tmp/ngx_devel_kit-${NGX_DEVEL_KIT_VERSION} \
 	  --add-module=/tmp/lua-nginx-module-${LUA_NGINX_MODULE_VERSION} \
+      --add-module=/tmp/stream-lua-nginx-module-${STREAM_LUA_NGINX_MODULE_VERSION} \
 	" \
 	&& addgroup -S nginx \
 	&& adduser -D -S -h /var/cache/nginx -s /sbin/nologin -G nginx nginx \
@@ -79,6 +81,8 @@ RUN GPG_KEYS=13C82A63B603576156E30A4EA0EA981B66B0D967 \
 	&& tar -xvf /tmp/ndk.tar.gz -C /tmp \
 	&& curl -fSL https://github.com/openresty/lua-nginx-module/archive/v${LUA_NGINX_MODULE_VERSION}.tar.gz -o /tmp/lua-nginx.tar.gz \
 	&& tar -xvf /tmp/lua-nginx.tar.gz -C /tmp \
+	&& curl -fSL https://github.com/openresty/stream-lua-nginx-module/archive/v${STREAM_LUA_NGINX_MODULE_VERSION}.tar.gz -o /tmp/stream-lua-nginx.tar.gz \
+	&& tar -xvf /tmp/stream-lua-nginx.tar.gz -C /tmp \
 	&& curl -fSL http://nginx.org/download/nginx-$NGINX_VERSION.tar.gz -o nginx.tar.gz \
 	&& curl -fSL http://nginx.org/download/nginx-$NGINX_VERSION.tar.gz.asc  -o nginx.tar.gz.asc \
 	&& export GNUPGHOME="$(mktemp -d)" \
