@@ -1,7 +1,5 @@
 FROM alpine:3.18.3
 
-MAINTAINER Wang Shaobo <fireshooter@163.com>
-
 ENV LANG en_US.UTF-8
 
 ENV NGINX_VERSION 1.24.0
