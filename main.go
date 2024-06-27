@@ -179,7 +179,7 @@ func (s *Server) init() error {
 
 func (s *Server) waitForNgxStartup() bool {
 	isRunning := false
-	timeoutForWait := time.After(30 * time.Second)
+	timeoutForWait := time.After(120 * time.Second)
 
 	for {
 		if nginx.IsRunning() {
