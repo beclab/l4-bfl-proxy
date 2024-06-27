@@ -223,7 +223,7 @@ func (s *Server) startNgx() error {
 }
 
 func (s *Server) waitForStreamLuaPort() error {
-	timeout := time.After(30 * time.Second)
+	timeout := time.After(120 * time.Second)
 
 	dial := func() error {
 		_, err := net.DialTimeout("tcp", luaNgxStreamAPIAddress, 2*time.Second)
@@ -236,7 +236,7 @@ func (s *Server) waitForStreamLuaPort() error {
 	for {
 		select {
 		case <-timeout:
-			return fmt.Errorf("30 seconds timed out to wait stream server listen")
+			return fmt.Errorf("120 seconds timed out to wait stream server listen")
 		default:
 			time.Sleep(time.Second)
 		}
