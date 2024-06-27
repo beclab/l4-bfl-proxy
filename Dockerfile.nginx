@@ -148,7 +148,8 @@ RUN GPG_KEYS=13C82A63B603576156E30A4EA0EA981B66B0D967 \
 	&& ln -sf /dev/stderr /var/log/nginx/error.log
 
 COPY nginx.conf /etc/nginx/nginx.conf
-RUN luarocks-5.1 install lua-cjson lua-resty-cookie
+RUN luarocks-5.1 install lua-cjson 
+RUN luarocks-5.1 install lua-resty-cookie 
 
 EXPOSE 80 443
 
