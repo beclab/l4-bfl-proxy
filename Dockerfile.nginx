@@ -46,6 +46,7 @@ RUN GPG_KEYS=13C82A63B603576156E30A4EA0EA981B66B0D967 \
 		--with-http_perl_module=dynamic \
 		--with-threads \
 		--with-stream \
+		--with-stream_ssl_module \
         --with-stream_ssl_preread_module \
 		--with-http_slice_module \
 		--with-mail \
