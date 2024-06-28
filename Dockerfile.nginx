@@ -8,7 +8,9 @@ ENV LUA_NGINX_MODULE_VERSION 0.10.24
 ENV STREAM_LUA_NGINX_MODULE_VERSION 0.0.13
 
 # Install LUAJIT and LUARestyCore
-RUN apk update && apk add --no-cache luajit lua-resty-core gcc musl-dev lua5.1-dev coreutils luarocks luarocks5.1
+RUN apk update && apk add --no-cache luajit lua-resty-core
+
+COPY ngx_stream_ssl_preread_module.c /tmp/ngx_stream_ssl_preread_module.c
 
 RUN GPG_KEYS=13C82A63B603576156E30A4EA0EA981B66B0D967 \
 	&& CONFIG="\
@@ -94,6 +96,8 @@ RUN GPG_KEYS=13C82A63B603576156E30A4EA0EA981B66B0D967 \
 	&& tar -zxC /usr/src -f nginx.tar.gz \
 	&& rm nginx.tar.gz \
 	&& cd /usr/src/nginx-$NGINX_VERSION \
+    # patch lua preread
+    && cp /tmp/ngx_stream_ssl_preread_module.c src/stream/ngx_stream_ssl_preread_module.c \
 	&& ./configure $CONFIG --with-debug \
 	&& make -j$(getconf _NPROCESSORS_ONLN) \
 	&& mv objs/nginx objs/nginx-debug \
@@ -148,8 +152,11 @@ RUN GPG_KEYS=13C82A63B603576156E30A4EA0EA981B66B0D967 \
 	# && ln -sf /dev/stderr /var/log/nginx/error.log
 
 COPY nginx.conf /etc/nginx/nginx.conf
+
+RUN apk add --no-cache --virtual .luarocks-deps gcc musl-dev lua5.1-dev coreutils luarocks luarocks5.1
 RUN luarocks-5.1 install lua-cjson 
 RUN luarocks-5.1 install lua-resty-cookie 
+RUN apk del .luarocks-deps
 
 EXPOSE 80 443
 
