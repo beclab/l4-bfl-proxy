@@ -10,7 +10,7 @@ ENV STREAM_LUA_NGINX_MODULE_VERSION 0.0.13
 # Install LUAJIT and LUARestyCore
 RUN apk update && apk add --no-cache luajit lua-resty-core
 
-COPY ngx_stream_ssl_preread_module.c /tmp/ngx_stream_ssl_preread_module.c
+COPY ngx_stream_ssl_preread_module.c.patch /tmp/ngx_stream_ssl_preread_module.c
 
 RUN GPG_KEYS=13C82A63B603576156E30A4EA0EA981B66B0D967 \
 	&& CONFIG="\
