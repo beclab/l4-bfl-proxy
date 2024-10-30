@@ -314,6 +314,15 @@ func (s *Server) watchUser(stop <-chan struct{}, timeAfter time.Duration) {
 	defer userWatch.Stop()
 
 	for {
+		if userWatch == nil {
+			userWatch, err = s.client.Resource(iamUserGVR).Watch(context.TODO(), metav1.ListOptions{})
+			if err != nil {
+				klog.V(2).Infof("re-watch iam users err: %s", err)
+				time.Sleep(time.Second)
+				continue
+			}
+
+		}
 		select {
 		case event, ok := <-userWatch.ResultChan():
 			if !ok {
@@ -803,6 +812,15 @@ func (s *Server) watchApp(stop <-chan struct{}, timeAfter time.Duration) {
 	}
 	defer appWatch.Stop()
 	for {
+		if appWatch == nil {
+			appWatch, err = s.client.Resource(appGVR).Watch(context.TODO(), metav1.ListOptions{})
+			if err != nil {
+				klog.Infof("re-watch app err: %s", err)
+				time.Sleep(time.Second)
+				continue
+			}
+		}
+
 		select {
 		case event, ok := <-appWatch.ResultChan():
 			if !ok {
