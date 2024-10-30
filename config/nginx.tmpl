@@ -99,4 +99,20 @@ stream {
         proxy_protocol on;
         proxy_pass  upstream_balancer;
     }
+
+    {{ range $server := $cfg.StreamServers }}
+    server {
+        {{ if eq $server.Protocol "udp" }}
+        listen {{ $server.Port }} udp;
+        {{ else }}
+        listen {{ $server.Port }};
+        {{ end }}
+
+        preread_by_lua_block {
+            ngx.var.bfl_ingress_host = "{{ $server.BflHost }}"
+            ngx.var.bfl_ingress_port = ngx.var.server_port
+        }
+        proxy_pass upstream_balancer;
+    }
+    {{ end }}
 }

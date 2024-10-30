@@ -124,6 +124,12 @@ type Cfg struct {
 	SSLProxyServerPort int
 	SSLServerPort      int
 	BFLServerPort      int
+	StreamServers      []StreamServer
+}
+type StreamServer struct {
+	Protocol string
+	Port     int32
+	BflHost  string
 }
 
 type Server struct {
@@ -160,6 +166,10 @@ func (s *Server) init() error {
 		return err
 	}
 	s.ngxTmpl = tmpl
+	streamServers, err := s.generateStreamServers()
+	if err != nil {
+		klog.Errorf("generate stream servers err=%v", err)
+	}
 
 	// cfg
 	s.Cfg = &Cfg{
@@ -167,6 +177,7 @@ func (s *Server) init() error {
 		StreamAPIAddress:   luaNgxStreamAPIAddress,
 		SSLServerPort:      sslServerPort,
 		SSLProxyServerPort: sslProxyServerPort,
+		StreamServers:      streamServers,
 	}
 
 	klog.Info("ensure nginx processes is running")
@@ -303,6 +314,15 @@ func (s *Server) watchUser(stop <-chan struct{}, timeAfter time.Duration) {
 	defer userWatch.Stop()
 
 	for {
+		if userWatch == nil {
+			userWatch, err = s.client.Resource(iamUserGVR).Watch(context.TODO(), metav1.ListOptions{})
+			if err != nil {
+				klog.V(2).Infof("re-watch iam users err: %s", err)
+				time.Sleep(time.Second)
+				continue
+			}
+
+		}
 		select {
 		case event, ok := <-userWatch.ResultChan():
 			if !ok {
@@ -587,6 +607,8 @@ func (s *Server) render() error {
 
 	var err error
 
+	// TODO: get app.ports
+
 	var buf bytes.Buffer
 	if err = s.ngxTmpl.Execute(&buf, s); err != nil {
 		return messageWithError("generate nginx config", err)
@@ -625,10 +647,12 @@ func (s *Server) render() error {
 	}
 
 	if err = s.waitForStreamLuaPort(); err != nil {
+
 		return messageWithError("wait stream lua port listen", err)
 	}
 
 	if err = s.writeLuaConfig(users); err != nil {
+		klog.Infof("first to write lua server err=%v", err)
 		return messageWithError("first to write lua server", err)
 	}
 
@@ -767,7 +791,143 @@ func main() {
 	}
 
 	klog.Info("watch iam users")
+	go s.watchApp(signal.StopCh(), time.Second)
 	s.watchUser(signal.StopCh(), 5*time.Second)
 
 	klog.Info("all done")
+}
+
+func (s *Server) watchApp(stop <-chan struct{}, timeAfter time.Duration) {
+	time.Sleep(timeAfter)
+	klog.Infof("start watch app")
+
+	defer func() {
+		klog.Infof("exit watch app")
+	}()
+
+	appWatch, err := s.client.Resource(appGVR).Watch(context.TODO(), metav1.ListOptions{})
+	if err != nil {
+		klog.Errorf("watch app err, %v", err)
+		return
+	}
+	defer appWatch.Stop()
+	for {
+		if appWatch == nil {
+			appWatch, err = s.client.Resource(appGVR).Watch(context.TODO(), metav1.ListOptions{})
+			if err != nil {
+				klog.Infof("re-watch app err: %s", err)
+				time.Sleep(time.Second)
+				continue
+			}
+		}
+
+		select {
+		case event, ok := <-appWatch.ResultChan():
+			if !ok {
+				appWatch.Stop()
+				time.Sleep(time.Second)
+				appWatch, err = s.client.Resource(appGVR).Watch(context.TODO(), metav1.ListOptions{})
+				if err != nil {
+					klog.Infof("re-watch app err: %s", err)
+				}
+				continue
+			}
+			klog.Infof("watch app: received event, %v,kind=%v", event.Type, event.Object.GetObjectKind().GroupVersionKind().Kind)
+			switch event.Type {
+			case watch.Added, watch.Modified, watch.Deleted:
+				err = s.renderAndReload()
+				if err != nil {
+					klog.Errorf("render and reload failed err=%v", err)
+				} else {
+					klog.Infof("render and reload success by watch app change event")
+				}
+			}
+		case <-stop:
+			return
+		}
+	}
+
+}
+
+func (s *Server) allApps() (*appv2alpha1.ApplicationList, error) {
+	apps, err := s.client.Resource(appGVR).List(context.TODO(), metav1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+	data, err := apps.MarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	var appList appv2alpha1.ApplicationList
+	if err = json.Unmarshal(data, &appList); err != nil {
+		return nil, err
+	}
+	return &appList, nil
+}
+
+func (s *Server) generateStreamServers() ([]StreamServer, error) {
+	users, err := s.client.Resource(iamUserGVR).List(context.TODO(), metav1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+	bflServiceMap := make(map[string]string)
+	for _, user := range users.Items {
+		svcName := fmt.Sprintf("bfl.%s-%s", userNamespacePrefix, user.GetName())
+		host, err := s.lookupHostAddr(svcName)
+		if err != nil {
+			return nil, err
+		}
+		bflServiceMap[user.GetName()] = host
+	}
+	appList, err := s.allApps()
+	if err != nil {
+		return nil, err
+	}
+	streamServers := make([]StreamServer, 0)
+
+	for _, app := range appList.Items {
+		for _, p := range app.Spec.Ports {
+			bflHost := bflServiceMap[app.Spec.Owner]
+			if bflHost == "" {
+				return nil, fmt.Errorf("can not find bfl service for user=%s", app.Spec.Owner)
+			}
+			server := StreamServer{
+				Protocol: p.Protocol,
+				Port:     p.ExposePort,
+				BflHost:  bflHost,
+			}
+			streamServers = append(streamServers, server)
+		}
+	}
+	return streamServers, nil
+}
+
+func (s *Server) renderAndReload() error {
+	streamServers, err := s.generateStreamServers()
+	if err != nil {
+		return err
+	}
+	s.Cfg.StreamServers = streamServers
+	var buf bytes.Buffer
+	err = s.ngxTmpl.Execute(&buf, s)
+	if err != nil {
+		return err
+	}
+	nginxConfig := buf.Bytes()
+	err = s.testTemplate(nginxConfig)
+	if err != nil {
+		return err
+	}
+	err = ioutil.WriteFile(nginx.DefNgxCfgPath, nginxConfig, nginx.PermReadWriteByUser)
+	if err != nil {
+		return err
+	}
+	output, err := s.ngxCmd.Reload()
+	if err != nil {
+		return fmt.Errorf("reload err=%v,output=%v", err, string(output))
+	}
+	if len(output) > 0 {
+		return fmt.Errorf("reload err=%v", string(output))
+	}
+	return nil
 }
