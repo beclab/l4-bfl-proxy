@@ -2,19 +2,40 @@ local cjson = require("cjson.safe")
 local configuration_data = ngx.shared.tcp_udp_configuration_data
 local tostring = tostring
 
-local _M = {
-    TRUSTED_DOMAIN_LIST = { "snowinning.com" }
-}
+local current_user_dict_sum = ""
+local current_user_dict = {}
 
+local _M = {}
+
+-- set the nginx shared dict, it's shared memory for all nginx workers
 function _M.set_users(users)
     local ok, err = configuration_data:set("users", users)
     if not ok then
         return "failed to updating users configuration, " .. tostring(err)
     end
+
+    local ok err = configuration_data:set("users_timestamp", tostring(os.time()))
+    if not ok then
+        return "failed to updating users configuration md5 sum, " .. tostring(err)
+    end
+
     return ""
 end
 
+-- get the users info from shared dict, every single worker must get the users info ownself
+-- cause the worker process is isolated
 local function get_users()
+    -- check curent user dict sum, if empty or sum not equal, then get the users from shared dict
+    user_sum = configuration_data:get("users_timestamp")
+    if user_sum = "" then
+        ngx.log(ngx.ERR, "get_users(): could not to get users data, users timestamp is empty")
+        return
+    end
+
+    if current_user_dict_sum != "" and current_user_dict_sum == user_sum then
+        return current_user_dict
+    end
+
     local users_data, get_user_err = configuration_data:get("users")
     if not users_data then
         ngx.log(ngx.ERR, "get_users(): could not to get users data, " .. tostring(get_user_err))
@@ -27,7 +48,10 @@ local function get_users()
         return
     end
 
-    return users
+    current_user_dict = users
+    current_user_dict_sum = user_sum
+    
+    return current_user_dict
 end
 
 function _M.list_users()

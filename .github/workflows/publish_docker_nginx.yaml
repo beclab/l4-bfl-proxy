@@ -23,7 +23,7 @@ jobs:
               uses: docker/build-push-action@v3
               with:
                 push: true
-                tags: bytetrade/nginx:${{ github.event.inputs.tags }}-amd64
+                tags: bytetrade/openresty:${{ github.event.inputs.tags }}-amd64
                 file: Dockerfile.nginx
                 platforms: linux/amd64
 
@@ -43,7 +43,7 @@ jobs:
               uses: docker/build-push-action@v3
               with:
                 push: true
-                tags: bytetrade/nginx:${{ github.event.inputs.tags }}-arm64
+                tags: bytetrade/openresty:${{ github.event.inputs.tags }}-arm64
                 file: Dockerfile.nginx
                 platforms: linux/arm64
 
@@ -61,5 +61,5 @@ jobs:
               
           - name: Push manifest
             run: |
-              docker manifest create bytetrade/nginx:${{ github.event.inputs.tags }} --amend bytetrade/nginx:${{ github.event.inputs.tags }}-amd64 --amend bytetrade/nginx:${{ github.event.inputs.tags }}-arm64
-              docker manifest push bytetrade/nginx:${{ github.event.inputs.tags }}
+              docker manifest create bytetrade/openresty:${{ github.event.inputs.tags }} --amend bytetrade/openresty:${{ github.event.inputs.tags }}-amd64 --amend bytetrade/openresty:${{ github.event.inputs.tags }}-arm64
+              docker manifest push bytetrade/openresty:${{ github.event.inputs.tags }}
