@@ -27,12 +27,12 @@ end
 local function get_users()
     -- check curent user dict sum, if empty or sum not equal, then get the users from shared dict
     user_sum = configuration_data:get("users_timestamp")
-    if user_sum = "" then
+    if user_sum == "" then
         ngx.log(ngx.ERR, "get_users(): could not to get users data, users timestamp is empty")
         return
     end
 
-    if current_user_dict_sum != "" and current_user_dict_sum == user_sum then
+    if current_user_dict_sum ~= "" and current_user_dict_sum == user_sum then
         return current_user_dict
     end
 
@@ -50,7 +50,7 @@ local function get_users()
 
     current_user_dict = users
     current_user_dict_sum = user_sum
-    
+
     return current_user_dict
 end
 
