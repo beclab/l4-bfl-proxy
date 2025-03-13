@@ -1,6 +1,8 @@
 {{- $cfg := .Cfg -}}
 {{- $users := .Users -}}
 
+pcre_jit on;
+
 # setup custom paths that do not require root access
 pid /run/nginx.pid;
 
@@ -32,7 +34,7 @@ http {
 stream {
     lua_package_path "/etc/nginx/lua/?.lua;;";
 
-    lua_shared_dict tcp_udp_configuration_data 5M;
+    lua_shared_dict tcp_udp_configuration_data 2M;
 
     init_by_lua_block {
         -- init modules

@@ -9,8 +9,8 @@ import (
 	"k8s.io/klog/v2"
 )
 
-const (
-	DefNgxBinary  = "/sbin/nginx"
+var (
+	DefNgxBinary  = "/usr/local/openresty/bin/openresty"
 	DefNgxCfgPath = "/etc/nginx/nginx.conf"
 )
 
@@ -30,11 +30,13 @@ func NewCommand() *Command {
 	binary := os.Getenv("NGINX_BINARY")
 	if binary != "" {
 		command.binary = binary
+		DefNgxBinary = binary
 	}
 
 	ngxCfgPath := os.Getenv("NGINX_CONF_PATH")
 	if ngxCfgPath != "" {
 		command.confPath = ngxCfgPath
+		DefNgxCfgPath = ngxCfgPath
 	}
 	return &command
 }
