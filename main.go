@@ -926,7 +926,7 @@ func (s *Server) renderAndReload() error {
 	if err != nil {
 		return fmt.Errorf("reload err=%v,output=%v", err, string(output))
 	}
-	if len(output) > 0 {
+	if len(output) > 0 && !strings.Contains(string(output), "signal process started") {
 		return fmt.Errorf("reload err=%v", string(output))
 	}
 	return nil
