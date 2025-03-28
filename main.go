@@ -71,6 +71,8 @@ var (
 
 	userAllowedDomainAccessPolicy = fmt.Sprintf("%s/allowed-domains", annotationGroup)
 
+	userLocalDomainIPDnsRecord = fmt.Sprintf("%s/local-domain-dns-record", annotationGroup)
+
 	iamUserGVR = schema.GroupVersionResource{
 		Group:    "iam.kubesphere.io",
 		Version:  "v1alpha2",
@@ -110,6 +112,7 @@ type User struct {
 	AllowedDomains       []string `json:"allowed_domains"`
 	NgxServerNameDomains []string `json:"ngx_server_name_domains"`
 	CreateTimestamp      int64    `json:"create_timestamp"`
+	LocalDomainIp        string   `json:"local_domain_ip"`
 }
 
 type Users []User
@@ -474,9 +477,7 @@ func (s *Server) listUsers() (Users, error) {
 			r = append(r, appId+"."+zone)
 		}
 
-		for _, appId := range publicCustomDomainApps {
-			r = append(r, appId)
-		}
+		r = append(r, publicCustomDomainApps...)
 
 		return r
 	}
@@ -500,22 +501,23 @@ func (s *Server) listUsers() (Users, error) {
 		}
 
 		var (
-			did, zone            string
-			accLevel, allowCIDR  string
-			denyAllStatus        string
-			allowedDomainsAnno   []string
-			ngxServerNameDomains []string
+			did, zone, LocalDomainIp string
+			accLevel, allowCIDR      string
+			denyAllStatus            string
+			allowedDomainsAnno       []string
+			ngxServerNameDomains     []string
 		)
 
 		if isEphemeralDomain == "no" {
 			did, zone = getUserAnnotation(&user, userAnnotationDid), getUserAnnotation(&user, userAnnotationZone)
+			LocalDomainIp = getUserAnnotation(&user, userLocalDomainIPDnsRecord)
 			accLevel = getUserAnnotation(&user, userLauncherAccessLevel)
 			allowCIDR = getUserAnnotation(&user, userLauncherAllowCIDR)
-			ngxServerNameDomains = []string{"local." + zone, zone}
+			ngxServerNameDomains = []string{zone}
 			denyAllStatus = getUserAnnotation(&user, userDenyAllPolicy)
 			allowedDomainsAnno = getPublicAccessDomain(zone, publicAppIdList, publicCustomDomainAppList, denyAllStatus)
 
-			if customDomainAppList != nil && len(customDomainAppList) > 0 {
+			if len(customDomainAppList) > 0 {
 				ngxServerNameDomains = append(ngxServerNameDomains, customDomainAppList...)
 			}
 		} else {
@@ -566,6 +568,7 @@ func (s *Server) listUsers() (Users, error) {
 			DenyAll:              denyAll,
 			AllowedDomains:       allowedDomainsAnno,
 			CreateTimestamp:      user.CreationTimestamp.Unix(),
+			LocalDomainIp:        LocalDomainIp,
 		}
 		users = append(users, _user)
 	}

@@ -102,7 +102,9 @@ local function set_variables(user)
 end
 
 local function deny_filter(user, server_name)
-    if string.find(server_name, "local.") then
+    -- always allow local ip
+    local remote_addr = ngx.var.remote_addr
+    if remote_addr == user.local_domain_ip then
         return true
     end
 
