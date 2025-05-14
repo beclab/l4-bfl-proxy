@@ -878,7 +878,8 @@ func (s *Server) generateStreamServers() ([]StreamServer, error) {
 		svcName := fmt.Sprintf("bfl.%s-%s", userNamespacePrefix, user.GetName())
 		host, err := s.lookupHostAddr(svcName)
 		if err != nil {
-			return nil, err
+			klog.Errorf("lookup user %s bfl host failed %v", user.GetName(), err)
+			continue
 		}
 		bflServiceMap[user.GetName()] = host
 	}
