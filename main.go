@@ -63,7 +63,7 @@ var (
 
 	userLauncherAllowCIDR = fmt.Sprintf("%s/launcher-allow-cidr", annotationGroup)
 
-	userAnnotationCreator = "kubesphere.io/creator"
+	userAnnotationCreator = "bytetrade.io/creator"
 
 	userAnnotationIsEphemeral = fmt.Sprintf("%s/is-ephemeral", annotationGroup)
 
