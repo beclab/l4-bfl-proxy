@@ -13,7 +13,7 @@ RUN git clone https://github.com/kubesphere/kubesphere.git bytetrade.io/kubesphe
     cd ../web3os/l4-bfl-proxy/ && \
     CGO_ENABLED=0 go build -a -o l4-bfl-proxy main.go
 
-FROM bytetrade/openresty:1.25.3
+FROM bytetrade/openresty:1.25.3-realip
 WORKDIR /
 COPY --from=builder /workspace/bytetrade.io/web3os/l4-bfl-proxy/config/lua etc/nginx/lua
 COPY --from=builder /workspace/bytetrade.io/web3os/l4-bfl-proxy/l4-bfl-proxy .
