@@ -61,5 +61,5 @@ jobs:
               
           - name: Push manifest
             run: |
-              docker manifest create bytetrade/openresty:base-${{ github.event.inputs.tags }} --amend bytetrade/openresty:base-${{ github.event.inputs.tags }}-amd64 --amend bytetrade/openresty:${{ github.event.inputs.tags }}-arm64
+              docker manifest create bytetrade/openresty:base-${{ github.event.inputs.tags }} --amend bytetrade/openresty:base-${{ github.event.inputs.tags }}-amd64 --amend bytetrade/openresty:base-${{ github.event.inputs.tags }}-arm64
               docker manifest push bytetrade/openresty:base-${{ github.event.inputs.tags }}
