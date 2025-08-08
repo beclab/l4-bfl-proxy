@@ -16,6 +16,7 @@ import (
 	"text/template"
 	"time"
 
+	iamv1alpha2 "github.com/beclab/api/iam/v1alpha2"
 	"github.com/beclab/l4-bfl-proxy/util"
 	appv2alpha1 "github.com/beclab/l4-bfl-proxy/util/app/v2alpha1"
 	"github.com/beclab/l4-bfl-proxy/util/nginx"
@@ -27,7 +28,6 @@ import (
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/klog/v2"
-	iamv1alpha2 "kubesphere.io/api/iam/v1alpha2"
 	ctrl "sigs.k8s.io/controller-runtime"
 )
 
@@ -57,7 +57,8 @@ var (
 
 	userAnnotationDid = fmt.Sprintf("%s/did", annotationGroup)
 
-	userAnnotationZone = fmt.Sprintf("%s/zone", annotationGroup)
+	userAnnotationZone      = fmt.Sprintf("%s/zone", annotationGroup)
+	userAnnotationOwnerRole = fmt.Sprintf("%s/owner-role", annotationGroup)
 
 	userLauncherAccessLevel = fmt.Sprintf("%s/launcher-access-level", annotationGroup)
 
@@ -461,6 +462,9 @@ func (s *Server) listUsers() (Users, error) {
 	getUserByName := func(name string) *iamv1alpha2.User {
 		for _, user := range userList.Items {
 			if user.Name == name {
+				return &user
+			}
+			if name == "cli" && user.Annotations[userAnnotationOwnerRole] == "owner" {
 				return &user
 			}
 		}
