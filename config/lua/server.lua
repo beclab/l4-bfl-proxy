@@ -68,7 +68,7 @@ local function match_user(server_name)
         end
 
         -- local zone
-        reg = string.format("^([A-Za-z0-9]+)-%s.local.%s$", user.name, user.zone)
+        reg = string.format("^([A-Za-z0-9]+)-%s.olares.local$", user.name)
         if server_name:match(reg) then
             ngx.log(ngx.INFO, "server_name: ", server_name, ", matched user: ", user.name)
             return user

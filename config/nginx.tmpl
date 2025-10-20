@@ -24,7 +24,7 @@ http {
     server_tokens off;
 
     server {
-        listen 80 default_server;
+        listen 81 default_server;
         server_name ~^(.+)$;
 
         return 301 https://$http_host$request_uri;
