@@ -517,7 +517,7 @@ func (s *Server) listUsers() (Users, error) {
 			LocalDomainIp = getUserAnnotation(&user, userLocalDomainIPDnsRecord)
 			accLevel = getUserAnnotation(&user, userLauncherAccessLevel)
 			allowCIDR = getUserAnnotation(&user, userLauncherAllowCIDR)
-			ngxServerNameDomains = []string{zone, fmt.Sprintf("%.olares.local", user.Name)} // add intranet domain
+			ngxServerNameDomains = []string{zone, fmt.Sprintf("%s.olares.local", user.Name)} // add intranet domain
 			denyAllStatus = getUserAnnotation(&user, userDenyAllPolicy)
 			allowedDomainsAnno = getPublicAccessDomain(zone, publicAppIdList, publicCustomDomainAppList, denyAllStatus)
 
