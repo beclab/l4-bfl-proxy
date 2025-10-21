@@ -13,5 +13,6 @@ FROM bytetrade/openresty:1.25.3-realip
 WORKDIR /
 COPY --from=builder /workspace/bytetrade.io/web3os/l4-bfl-proxy/config/lua etc/nginx/lua
 COPY --from=builder /workspace/bytetrade.io/web3os/l4-bfl-proxy/l4-bfl-proxy .
+COPY nginx.conf /etc/nginx/nginx.conf
 
 ENTRYPOINT ["/l4-bfl-proxy"]
