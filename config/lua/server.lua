@@ -108,6 +108,12 @@ local function deny_filter(user, server_name)
         return true
     end
 
+    -- allow vpn cidr
+    local vpn_cidr = ipmatcher.new("100.64.0.0/24")
+    if vpn_cidr:match(remote_addr) then
+        return true
+    end
+
     local deny = user.deny_all
     if deny == nil or deny == 0 then
         return true
