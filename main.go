@@ -370,73 +370,80 @@ func (s *Server) lookupHostAddr(svc string) (string, error) {
 }
 
 func (s *Server) listApplications() ([]string, []string, []string) {
-	var publicApps []string
+	publicApps := []string{"headscale"} // hardcode headscale appid
 	var publicCustomDomainApps []string
 	var customDomainApps []string
 
-	list, err := s.client.Resource(appGVR).List(context.TODO(), metav1.ListOptions{})
-	if err != nil {
-		return nil, nil, nil
-	}
+	// DEPRECATED:
+	//
+	// list, err := s.client.Resource(appGVR).List(context.TODO(), metav1.ListOptions{})
+	// if err != nil {
+	// 	return nil, nil, nil
+	// }
 
-	data, err := list.MarshalJSON()
-	if err != nil {
-		return nil, nil, nil
-	}
+	// data, err := list.MarshalJSON()
+	// if err != nil {
+	// 	return nil, nil, nil
+	// }
 
-	var appList appv2alpha1.ApplicationList
-	if err = json.Unmarshal(data, &appList); err != nil {
-		return nil, nil, nil
-	}
+	// var appList appv2alpha1.ApplicationList
+	// if err = json.Unmarshal(data, &appList); err != nil {
+	// 	return nil, nil, nil
+	// }
 
-	getAppPrefix := func(entrancecount, index int, appid string) string {
-		if entrancecount == 1 {
-			return appid
-		}
-		return fmt.Sprintf("%s%d", appid, index)
-	}
+	// getAppPrefix := func(entrancecount, index int, appid string) string {
+	// 	if entrancecount == 1 {
+	// 		return appid
+	// 	}
+	// 	return fmt.Sprintf("%s%d", appid, index)
+	// }
 
-	for _, app := range appList.Items {
-		if app.Spec.Entrances == nil || len(app.Spec.Entrances) == 0 {
-			continue
-		}
+	// for _, app := range appList.Items {
+	// 	if len(app.Spec.Entrances) == 0 {
+	// 		continue
+	// 	}
 
-		var customDomains []string
-		var customDomainsPrefix []string
-		var entrancecounts = len(app.Spec.Entrances)
+	// 	var customDomains []string
+	// 	var customDomainsPrefix []string
+	// 	var entrancecounts = len(app.Spec.Entrances)
 
-		for index, entrance := range app.Spec.Entrances {
-			prefix := getAppPrefix(entrancecounts, index, app.Spec.Appid)
+	// 	for index, entrance := range app.Spec.Entrances {
+	// 		prefix := getAppPrefix(entrancecounts, index, app.Spec.Appid)
 
-			customDomainEntrancesMap := getSettingsKeyMap(&app, settingsCustomDomain)
-			entranceAuthorizationLevel := entrance.AuthLevel
+	// 		customDomainEntrancesMap := getSettingsKeyMap(&app, settingsCustomDomain)
+	// 		entranceAuthorizationLevel := entrance.AuthLevel
 
-			customDomainEntrance, ok := customDomainEntrancesMap[entrance.Name]
-			if ok {
-				if entrancePrefix := customDomainEntrance[settingsCustomDomainThirdLevelDomain]; entrancePrefix != "" {
-					customDomainsPrefix = append(customDomainsPrefix, entrancePrefix)
-				}
-				if entranceCustomDomain := customDomainEntrance[settingsCustomDomainThirdPartyDomain]; entranceCustomDomain != "" {
-					customDomainApps = append(customDomainApps, entranceCustomDomain)
+	// 		customDomainEntrance, ok := customDomainEntrancesMap[entrance.Name]
+	// 		if ok {
+	// 			if entrancePrefix := customDomainEntrance[settingsCustomDomainThirdLevelDomain]; entrancePrefix != "" {
+	// 				if entranceAuthorizationLevel == ApplicationAuthorizationLevelPublic {
+	// 					customDomainsPrefix = append(customDomainsPrefix, entrancePrefix)
+	// 				}
+	// 			}
+	// 			if entranceCustomDomain := customDomainEntrance[settingsCustomDomainThirdPartyDomain]; entranceCustomDomain != "" {
+	// 				customDomainApps = append(customDomainApps, entranceCustomDomain)
 
-					if entranceAuthorizationLevel == ApplicationAuthorizationLevelPublic {
-						customDomains = append(customDomains, entranceCustomDomain)
-					}
-				}
-			}
+	// 				if entranceAuthorizationLevel == ApplicationAuthorizationLevelPublic {
+	// 					customDomains = append(customDomains, entranceCustomDomain)
+	// 				}
+	// 			}
+	// 		}
 
-			if prefix != "" {
-				publicApps = append(publicApps, prefix)
-				if len(customDomainsPrefix) > 0 {
-					publicApps = append(publicApps, customDomainsPrefix...)
-				}
+	// 		if prefix != "" {
+	// 			if entranceAuthorizationLevel == ApplicationAuthorizationLevelPublic {
+	// 				publicApps = append(publicApps, prefix)
+	// 			}
 
-				if len(customDomains) > 0 {
-					publicCustomDomainApps = append(publicCustomDomainApps, customDomains...)
-				}
-			}
-		}
-	}
+	// 			if len(customDomainsPrefix) > 0 {
+	// 				publicApps = append(publicApps, customDomainsPrefix...)
+	// 			}
+
+	// 			if len(customDomains) > 0 {
+	// 				publicCustomDomainApps = append(publicCustomDomainApps, customDomains...)
+	// 			}
+	// 		}
+	// 	}
+	// }
 
 	return publicApps, publicCustomDomainApps, customDomainApps
 }
@@ -472,7 +479,7 @@ func (s *Server) listUsers() (Users, error) {
 	}
 
 	getPublicAccessDomain := func(zone string, publicAppIds []string, publicCustomDomainApps []string, denied string) []string {
-		var r []string
+		r := []string{zone} // always add user zone domain
 		if (publicAppIds == nil && publicCustomDomainApps == nil) || denied != "1" {
 			return r
 		}
