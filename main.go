@@ -753,7 +753,7 @@ func flags() error {
 	pflag.StringVarP(&userNamespacePrefix, "user-namespace-prefix", "", "user-space", "User namespace name prefix")
 	pflag.IntVarP(&workerProcesses, "nginx-workers", "w", runtime.NumCPU(), "Nginx worker processes")
 	pflag.IntVarP(&sslServerPort, "ssl-server-port", "", 443, "Stream ssl proxy listen port")
-	pflag.IntVarP(&bflServicePort, "bfl-service-port", "", 443, "Bfl ingress ssl port")
+	pflag.IntVarP(&bflServicePort, "bfl-service-port", "", 444, "Bfl ingress ssl port")
 	pflag.UintVarP(&periodSeconds, "period-seconds", "", 15, "Period seconds for watch users")
 
 	pflag.Parse()
